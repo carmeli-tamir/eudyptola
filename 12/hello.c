@@ -43,14 +43,50 @@ int identity_create(char *name, int id) {
 
 	return 0;
 }
- 
+
+struct identity * identity_find(int id) {
+	struct identity *curr = NULL;
+	list_for_each_entry(curr, &identities, list) {
+		if (id == curr->id) {
+			return curr;
+		}
+	}
+	return NULL;
+}
+
+
+void identity_destroy(int id) {
+        struct identity *found = identity_find(id);
+        if (found) {
+                list_del(&found->list);
+		kfree(found);
+        }
+}
+
+
+
 static int __init hello_start(void)
 {
+    struct identity *temp = NULL;
     printk(KERN_INFO "Hello world\n");
     if (identity_create("Alice", 1)) {
-	goto return_start;
+        goto return_start;
     }
+    if (identity_create("Bob", 2)) {
+        goto clean_alice;
+    }
+    if (identity_create("Dave", 3)) {
+        goto clean_bob;
+    }
+
+    temp = identity_find(3);
+    pr_info("id 3 = %s\n", temp->name);
+
+    identity_destroy(3);
+clean_bob:
+    identity_destroy(2);
 clean_alice:
+    identity_destroy(1);
 return_start:
     return 0;
 }
