@@ -14,7 +14,7 @@ MODULE_VERSION("0.1");
 
 #define MAX_NAME_LEN 20
 
-typedef struct identity {
+struct identity {
     char name[MAX_NAME_LEN];
     int id;
     bool busy;
@@ -80,14 +80,27 @@ static int __init hello_start(void)
     }
 
     temp = identity_find(3);
-    pr_info("id 3 = %s\n", temp->name);
+    if (temp) {
+	pr_info("id 3 = %s\n", temp->name);
+    }
+    
+    temp = identity_find(2);
+    if (temp) {
+        pr_info("id 2 = %s\n", temp->name);
+    }
 
+	
     identity_destroy(3);
 clean_bob:
     identity_destroy(2);
 clean_alice:
     identity_destroy(1);
 return_start:
+    identity_destroy(1);
+    temp = identity_find(2);
+    if (!temp) {
+        pr_info("Probably empty\n");
+    }
     return 0;
 }
  
