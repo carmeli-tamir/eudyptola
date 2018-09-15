@@ -1,0 +1,58 @@
+diff --git a/../12/hello.c b/hello.c
+index 70969ec..35602d6 100644
+--- a/../12/hello.c
++++ b/hello.c
+@@ -12,6 +12,9 @@ MODULE_DESCRIPTION("A simple Hello world LKM!");
+  
+ MODULE_VERSION("0.1");
+ 
++/* Slab cache */
++static struct kmem_cache *identities_slab;
++
+ #define MAX_NAME_LEN 20
+ 
+ struct identity {
+@@ -26,8 +29,8 @@ static LIST_HEAD(identities);
+ int identity_create(char *name, int id) {
+ 	struct identity *new = NULL;
+ 	
+-	new = kmalloc(sizeof(*new), GFP_KERNEL);
+-	if (NULL == new) {
++	new = kmem_cache_alloc(identities_slab, GFP_KERNEL);
++        if (NULL == new) {
+ 		pr_info("Failed allocating identity\n");
+ 		return 1; 
+ 	}
+@@ -59,7 +62,7 @@ void identity_destroy(int id) {
+         struct identity *found = identity_find(id);
+         if (found) {
+                 list_del(&found->list);
+-		kfree(found);
++		kmem_cache_free(identities_slab, found);
+         }
+ }
+ 
+@@ -69,6 +72,13 @@ static int __init hello_start(void)
+ {
+     struct identity *temp = NULL;
+     printk(KERN_INFO "Hello world\n");
++    
++    identities_slab = KMEM_CACHE(identity, SLAB_POISON);
++    if (!identities_slab) {
++    	pr_info("Failed creating cache :(\n");
++	return -EINVAL;
++    }    
++
+     if (identity_create("Alice", 1)) {
+         goto return_start;
+     }
+@@ -105,7 +115,8 @@ return_start:
+ }
+  
+ static void __exit hello_end(void)
+-{
++{   
++    kmem_cache_destroy(identities_slab);
+     printk(KERN_INFO "Goodbye Mr.\n");
+ }
+  
