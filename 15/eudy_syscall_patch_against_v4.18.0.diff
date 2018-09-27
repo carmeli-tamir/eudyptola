@@ -1,0 +1,132 @@
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index 3cf7b53..f55e1f9 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -398,3 +398,4 @@
+ 384	i386	arch_prctl		sys_arch_prctl			__ia32_compat_sys_arch_prctl
+ 385	i386	io_pgetevents		sys_io_pgetevents		__ia32_compat_sys_io_pgetevents
+ 386	i386	rseq			sys_rseq			__ia32_sys_rseq
++387	i386	eudyptola		sys_eudyptola			__ia32_sys_eudyptola
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index f0b1709..0d5ea7f 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -343,6 +343,7 @@
+ 332	common	statx			__x64_sys_statx
+ 333	common	io_pgetevents		__x64_sys_io_pgetevents
+ 334	common	rseq			__x64_sys_rseq
++335	common	eudyptola		__x64_sys_eudyptola
+ 
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 5c1a093..af9a248 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -905,6 +905,12 @@ asmlinkage long sys_statx(int dfd, const char __user *path, unsigned flags,
+ 			  unsigned mask, struct statx __user *buffer);
+ asmlinkage long sys_rseq(struct rseq __user *rseq, uint32_t rseq_len,
+ 			 int flags, uint32_t sig);
++/*
++ * Eudoptyla
++ */
++
++asmlinkage long sys_eudyptula(int high_id, int low_id);
++
+ 
+ /*
+  * Architecture-specific system calls
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index 4299067..a1eb406 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -734,9 +734,12 @@ __SYSCALL(__NR_pkey_free,     sys_pkey_free)
+ __SYSCALL(__NR_statx,     sys_statx)
+ #define __NR_io_pgetevents 292
+ __SC_COMP(__NR_io_pgetevents, sys_io_pgetevents, compat_sys_io_pgetevents)
++#define __NR_eudyptola 293
++__SYSCALL(__NR_eudyptola,    sys_eudyptula)
++
+ 
+ #undef __NR_syscalls
+-#define __NR_syscalls 293
++#define __NR_syscalls 294
+ 
+ /*
+  * 32 bit systems traditionally used different
+diff --git a/init/Kconfig b/init/Kconfig
+index 041f3a0..4c7d216 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1408,6 +1408,14 @@ config KALLSYMS_BASE_RELATIVE
+ 	  time constants, and no relocation pass is required at runtime to fix
+ 	  up the entries based on the runtime load address of the kernel.
+ 
++config EUDYPTOLA
++        bool "Add eudyptola task 15 syscall"
++        default x86_64
++        help
++          Enabling this option adds the system call described in eudyptola challenge
++          15.
++
++
+ # end of the "standard kernel features (expert users)" menu
+ 
+ # syscall, maps, verifier
+diff --git a/kernel/Makefile b/kernel/Makefile
+index 04bc07c..abdbec8 100644
+--- a/kernel/Makefile
++++ b/kernel/Makefile
+@@ -1,4 +1,4 @@
+-# SPDX-License-Identifier: GPL-2.0
++icense-Identifier: GPL-2.0
+ #
+ # Makefile for the linux kernel.
+ #
+@@ -116,6 +116,7 @@ obj-$(CONFIG_TORTURE_TEST) += torture.o
+ obj-$(CONFIG_HAS_IOMEM) += iomem.o
+ obj-$(CONFIG_ZONE_DEVICE) += memremap.o
+ obj-$(CONFIG_RSEQ) += rseq.o
++obj-$(CONFIG_EUDYPTOLA) += eudytola.o
+ 
+ $(obj)/configs.o: $(obj)/config_data.h
+ 
+diff --git a/kernel/eudytola.c b/kernel/eudytola.c
+new file mode 100644
+index 0000000..ee7327579
+--- /dev/null
++++ b/kernel/eudytola.c
+@@ -0,0 +1,17 @@
++#include <linux/kernel.h>
++#include <linux/errno.h>
++#include <linux/syscalls.h>
++
++#define my_id 0x010203040506
++ 
++SYSCALL_DEFINE2(eudyptola, int, high_id, int, low_id)
++{
++    uint64_t given_id = high_id;
++    given_id = (given_id << (sizeof(int) * 8)) + low_id;
++    
++    if (given_id == my_id) {
++	return 0;
++    }
++    
++    return -EINVAL;
++}
+diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+index df55617..0bd4f5f 100644
+--- a/kernel/sys_ni.c
++++ b/kernel/sys_ni.c
+@@ -287,6 +287,11 @@ COND_SYSCALL(recvmmsg);
+ COND_SYSCALL_COMPAT(recvmmsg);
+ 
+ /*
++ * Eudyptola
++ */
++COND_SYSCALL(sys_eudyptula);
++
++/*
+  * Architecture specific syscalls: see further below
+  */
+ 
