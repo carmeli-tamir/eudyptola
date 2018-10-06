@@ -7,7 +7,7 @@ Fixed all the meaningful sparse warnings of the EMXX-UDC driver in the staging d
 2. Added a static modifier to a global variable only visible to the driver's main .c file.
 3. Added missing conversions from little endian variables to regular architecture-dependent variables.
 
-Patch on linux kernel mailing list: https://lkml.org/lkml/2018/10/5/983
+Patch on linux kernel mailing list: https://lkml.org/lkml/2018/10/6/186
 
 ## This is the task
 

@@ -1,13 +1,15 @@
-From 153ca278fbfc563511bf10f4ef4e324f3f4679b3 Mon Sep 17 00:00:00 2001
 From: Carmeli Tamir <carmeli.tamir@gmail.com>
 Date: Fri, 5 Oct 2018 05:26:21 -0400
-Subject: [PATCH] STAGING/EMXX_UDC: emxx_udc.c: Fixed all meaningful sparse errors: 1.
- Added static to udc_controller 2. Added mising __iomem modifier to handle
- p_regs 3. Added missing le16_to_cpu
+Subject: [PATCH] STAGING/EMXX_UDC: Fixed all meaningful sparse errors.
+
+Fixed all meaningful sparse errors: 
+1. Added static to udc_controller 
+2. Added mising __iomem modifier to handle p_regs 
+3. Added missing le16_to_cpu
 
 Signed-off-by: Tamir Carmeli <carmeli.tamir@gmail.com>
 ---
- drivers/staging/emxx_udc/Makefile   |  2 +-
+
  drivers/staging/emxx_udc/emxx_udc.c | 69 +++++++++++++++++++------------------
  drivers/staging/emxx_udc/emxx_udc.h |  2 +-
  3 files changed, 38 insertions(+), 35 deletions(-)
