@@ -1,3 +1,4 @@
+obj-y := identity.o
 obj-m += eu18.o 
 
 all:

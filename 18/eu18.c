@@ -10,11 +10,15 @@
 #include <linux/wait.h>
 #include <linux/printk.h>
 
+#include "identity.h"
+
 MODULE_AUTHOR("BitsCruncher");
-MODULE_DESCRIPTION("Eudyptola17");
+MODULE_DESCRIPTION("Eudyptola18");
 MODULE_LICENSE("GPL");
 
-const char id[] = "BitsCruncher";
+static LIST_HEAD(identities);
+
+static const char id[] = "BitsCruncher";
 
 ssize_t hello_write (struct file *f, const char __user *c, size_t s, loff_t *l)
 {
