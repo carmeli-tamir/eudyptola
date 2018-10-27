@@ -1,4 +1,4 @@
-obj-y := identity.o
+eu18-objs += main.o identity.o
 obj-m += eu18.o 
 
 all:

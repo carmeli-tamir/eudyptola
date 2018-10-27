@@ -74,16 +74,22 @@ static struct task_struct *eu_thread = NULL;
 static int wait_to_die(void *data)
 {
 	struct identity *iden = NULL;
-	do {
+	while(!kthread_should_stop()) {
+		wait_event_interruptible(wee_wait, 
+			kthread_should_stop() || (iden = identity_get(&identities)));
+
 		if (iden) {
-			msleep_interruptible(5 * 1000);
+			// These 2 lines will actually yield when the
+			// kthread_stop() is called, as opposed to
+			// msleep_interruptilbe()
+			set_current_state(TASK_INTERRUPTIBLE);
+			schedule_timeout(msecs_to_jiffies(5 * 1000));
+			
 			pr_info("kthread got id %d with name %s\n", iden->id, iden->name);
 			kfree(iden);
+			iden = NULL;
 		}
-		wait_event(wee_wait, 
-			kthread_should_stop() || (iden = identity_get(&identities)));
 	}
-	while(!kthread_should_stop());
 	return 0;
 }
 
@@ -112,7 +118,7 @@ static void __exit eu17_exit(void)
 {
 	misc_deregister(&hello_misc);
 	clean_list();
-	kthread_stop(eu_thread); 
+	kthread_stop(eu_thread);
 }
 
 module_init(eu17_init);
